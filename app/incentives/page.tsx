@@ -1,0 +1,87 @@
+import type { Metadata } from 'next'
+import Navbar from '@/components/Navbar'
+import Footer from '@/components/Footer'
+import { Shield, ExternalLink } from 'lucide-react'
+
+export const revalidate = 3600
+export const metadata: Metadata = {
+  title: 'الحوافز الحكومية للسيارات الكهربائية | شحن MENA',
+  description: 'أحدث الإعفاءات والحوافز الحكومية في السعودية والإمارات والمغرب',
+}
+
+type Incentive = { id: string; country: string; title_ar: string; description_ar: string; value: string; valid_until: string | null; source_url: string | null }
+
+async function getIncentives(): Promise<Incentive[]> {
+  try {
+    const { neon } = await import('@neondatabase/serverless')
+    const sql = neon(process.env.DATABASE_URL!)
+    const rows = await sql('SELECT id, country, title_ar, description_ar, value, valid_until, source_url FROM incentives ORDER BY country, title_ar')
+    return rows as Incentive[]
+  } catch {
+    return []
+  }
+}
+
+export default async function IncentivesPage() {
+  const incentives = await getIncentives()
+  const countries: Record<string, Incentive[]> = {}
+  incentives.forEach(i => {
+    if (!countries[i.country]) countries[i.country] = []
+    countries[i.country].push(i)
+  })
+  const flags: Record<string, string> = { SA: '🇸🇦', AE: '🇦🇪', MA: '🇲🇦' }
+  const names: Record<string, string> = { SA: 'السعودية', AE: 'الإمارات', MA: 'المغرب' }
+
+  return (
+    <>
+      <Navbar />
+      <main dir="rtl" className="pt-20 pb-24 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-12">
+            <div className="inline-flex items-center justify-center w-14 h-14 bg-[#F5A623]/10 border border-[#F5A623]/30 rounded-lg mb-4">
+              <Shield size={28} className="text-[#F5A623]" />
+            </div>
+            <h1 className="font-tajawal font-black text-4xl text-[#FAF3E0] mb-3" style={{ fontFamily: 'Tajawal, sans-serif' }}>الحوافز الحكومية</h1>
+            <p className="text-[#A89070]" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>وفّر عند شراء سيارتك الكهربائية</p>
+          </div>
+
+          {Object.entries(countries).map(([country, items]) => (
+            <div key={country} className="mb-10">
+              <h2 className="font-tajawal font-black text-2xl text-[#FAF3E0] mb-5" style={{ fontFamily: 'Tajawal, sans-serif' }}>
+                {flags[country]} {names[country]}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {items.map(inc => (
+                  <div key={inc.id} className="card-surface">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <h3 className="font-tajawal font-bold text-[#FAF3E0]" style={{ fontFamily: 'Tajawal, sans-serif' }}>{inc.title_ar}</h3>
+                      <span className="badge-gold flex-shrink-0" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>{inc.value}</span>
+                    </div>
+                    <p className="text-[#A89070] text-sm leading-relaxed mb-3" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>{inc.description_ar}</p>
+                    <div className="flex items-center justify-between text-xs text-[#A89070]">
+                      {inc.valid_until && <span style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>صالح حتى: {new Date(inc.valid_until).toLocaleDateString('ar-SA')}</span>}
+                      {inc.source_url && (
+                        <a href={inc.source_url} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[#F5A623] hover:text-[#E09510]"
+                          style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>
+                          المصدر <ExternalLink size={10} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {incentives.length === 0 && (
+            <div className="card-surface text-center py-16">
+              <p className="text-[#A89070]" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>لا توجد بيانات بعد</p>
+            </div>
+          )}
+        </div>
+      </main>
+      <Footer />
+    </>
+  )
+}
