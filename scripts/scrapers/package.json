@@ -1,0 +1,17 @@
+{
+  "name": "shahn-mena-scrapers",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "scrape:charging":   "node scrapers/charging-scraper.js",
+    "scrape:incentives": "node scrapers/incentives-scraper.js",
+    "scrape:tco":        "node scrapers/tco-scraper.js",
+    "scrape:articles":   "node scrapers/articles-generator.js"
+  },
+  "dependencies": {
+    "axios":   "^1.7.2",
+    "cheerio": "^1.0.0",
+    "dotenv":  "^16.4.5",
+    "pg":      "^8.12.0"
+  }
+}
