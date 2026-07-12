@@ -121,15 +121,16 @@ async function upsertIncentive(inc) {
         description_ar = ${inc.description_ar},
         value = ${inc.value},
         valid_until = ${inc.valid_until},
-        source_url = ${inc.source_url}
+        source_url = ${inc.source_url},
+        reviewed_at = ${LAST_REVIEWED}
       WHERE id = ${existing[0].id}
     `
     return 'updated'
   }
 
   await sql`
-    INSERT INTO incentives (id, country, title_ar, description_ar, value, valid_until, source_url)
-    VALUES (gen_random_uuid()::text, ${inc.country}, ${inc.title_ar}, ${inc.description_ar}, ${inc.value}, ${inc.valid_until}, ${inc.source_url})
+    INSERT INTO incentives (id, country, title_ar, description_ar, value, valid_until, source_url, reviewed_at)
+    VALUES (gen_random_uuid()::text, ${inc.country}, ${inc.title_ar}, ${inc.description_ar}, ${inc.value}, ${inc.valid_until}, ${inc.source_url}, ${LAST_REVIEWED})
   `
   return 'inserted'
 }

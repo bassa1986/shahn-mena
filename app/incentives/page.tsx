@@ -9,17 +9,22 @@ export const metadata: Metadata = {
   description: 'أحدث الإعفاءات والحوافز الحكومية في السعودية والإمارات والمغرب',
 }
 
-type Incentive = { id: string; country: string; title_ar: string; description_ar: string; value: string; valid_until: string | null; source_url: string | null }
+type Incentive = { id: string; country: string; title_ar: string; description_ar: string; value: string; valid_until: string | null; source_url: string | null; reviewed_at: string | null }
 
 async function getIncentives(): Promise<Incentive[]> {
   try {
     const { neon } = await import('@neondatabase/serverless')
     const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql('SELECT id, country, title_ar, description_ar, value, valid_until, source_url FROM incentives ORDER BY country, title_ar')
+    const rows = await sql('SELECT id, country, title_ar, description_ar, value, valid_until, source_url, reviewed_at FROM incentives ORDER BY country, title_ar')
     return rows as Incentive[]
   } catch {
     return []
   }
+}
+
+function daysSince(dateStr: string | null): number | null {
+  if (!dateStr) return null
+  return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
 }
 
 function isExpired(validUntil: string | null): boolean {
@@ -77,6 +82,20 @@ export default async function IncentivesPage() {
             </a>
           )}
         </div>
+        {(() => {
+          const age = daysSince(inc.reviewed_at)
+          if (age === null) return null
+          const stale = age > 120
+          return (
+            <div
+              className={`mt-2 pt-2 border-t border-[#F5A623]/5 text-[11px] ${stale ? 'text-amber-400' : 'text-[#A89070]/70'}`}
+              style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}
+            >
+              {stale ? '⚠ ' : ''}آخر مراجعة يدوية: {new Date(inc.reviewed_at!).toLocaleDateString('ar-SA')}
+              {stale ? ' — يحتاج تحقق' : ''}
+            </div>
+          )
+        })()}
       </div>
     )
   }
