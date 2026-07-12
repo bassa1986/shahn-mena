@@ -137,7 +137,11 @@ async function run() {
   }
 
   log.success(`\n✨ Done! ${saved} drafts saved`)
-  log.info('Publish at: /admin/articles')
+  // NOTE: this used to say "Publish at: /admin/articles" — that route
+  // doesn't exist anywhere in this codebase (app/admin is an empty
+  // directory). Drafts sit in the DB with published=false until reviewed
+  // with the actual tool that does that job:
+  log.info('Review with: node scripts/review-drafts.js')
   const drafts = await query('SELECT COUNT(*) FROM articles WHERE published=false')
   console.log(`📋 Pending drafts: ${drafts.rows[0].count}`)
 }
