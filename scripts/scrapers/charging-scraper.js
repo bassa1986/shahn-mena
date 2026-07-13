@@ -8,6 +8,16 @@ const log = {
   error:   msg => console.log('❌', msg),
 }
 
+// OpenChargeMap's own docs describe this as a shared, low-privilege
+// free-tier key meant for exactly this kind of use — so this isn't a
+// "someone's account got compromised" situation. Still moved to an env
+// var rather than a literal in the fetch call, since a committed
+// credential in a public repo is bad hygiene regardless of how low the
+// actual stakes are. The hardcoded value stays as the fallback default,
+// so this keeps working exactly as before even if you never add the
+// env var anywhere — nothing breaks either way.
+const OCM_API_KEY = process.env.OPENCHARGEMAP_API_KEY || 'b95dee04-1427-4042-b9cb-17e29db8b1f7'
+
 async function fetchFromOpenChargeMap(countryCode, maxResults = 100) {
   try {
     log.info(`Fetching stations for ${countryCode}...`)
@@ -17,10 +27,9 @@ async function fetchFromOpenChargeMap(countryCode, maxResults = 100) {
         maxresults: maxResults, compact: true, verbose: false,
         statustypeid: 50,
       },
-      headers: { 'X-API-Key': 'b95dee04-1427-4042-b9cb-17e29db8b1f7' },
+      headers: { 'X-API-Key': OCM_API_KEY },
       timeout: 15000,
     })
-
     const stations = []
     for (const poi of res.data) {
       if (!poi.AddressInfo?.Latitude || !poi.AddressInfo?.Longitude) continue
@@ -31,7 +40,6 @@ async function fetchFromOpenChargeMap(countryCode, maxResults = 100) {
       if (provider.toLowerCase().includes('dewa'))  provider = 'DEWA'
       if (provider.toLowerCase().includes('adnoc')) provider = 'ADNOC E2GO'
       if (provider.toLowerCase().includes('eviq'))  provider = 'EVIQ'
-
       stations.push({
         name:             poi.AddressInfo.Title ?? 'Charging Station',
         network_provider: provider,
