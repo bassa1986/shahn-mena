@@ -18,6 +18,12 @@
 
 import { neon } from '@neondatabase/serverless'
 import readline from 'readline/promises'
+import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+dotenv.config({ path: path.join(__dirname, '../.env.local') })
 
 const sql = neon(process.env.DATABASE_URL)
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout })

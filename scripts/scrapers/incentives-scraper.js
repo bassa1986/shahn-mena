@@ -17,6 +17,12 @@
 // source_url links before anyone trusts the "value" field.
 
 import { neon } from '@neondatabase/serverless'
+import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+dotenv.config({ path: path.join(__dirname, '../../.env.local') })
 
 const sql = neon(process.env.DATABASE_URL)
 
