@@ -25,6 +25,46 @@ const OLLAMA_MODEL = process.env.OLLAMA_MODEL ?? 'llama3.2'
 const GROQ_API_KEY = process.env.GROQ_API_KEY ?? ''
 const GROQ_MODEL   = process.env.GROQ_MODEL   ?? 'llama-3.3-70b-versatile'
 
+// Anything matching these is NOT a car, regardless of what else matches.
+// This is what let the Momentum e-bike through last run — "electric" and
+// "battery" matched, nothing checked whether it was actually a car.
+const HARD_EXCLUDE = [
+  'e-bike', 'ebike', 'electric bike', 'electric bicycle',
+  'scooter', 'moped', 'motorcycle', 'e-scooter',
+  'drone', 'boat', 'jet ski', 'atv',
+]
+
+// Confirms the story is actually about a car/vehicle, not just "electric"
+// in general (batteries, grids, and bikes are all "electric" too).
+const CAR_SIGNAL = [
+  'car', 'vehicle', 'sedan', 'suv', 'truck', 'pickup',
+  'tesla', 'byd', 'lucid', 'hyundai', 'kia', 'rivian', 'polestar',
+  'model 3', 'model y', 'model s', 'model x',
+  'ev sales', 'ev market', 'automaker', 'automotive',
+]
+
+// Either the story mentions the Gulf/MENA directly, or it's substantively
+// about car-industry mechanics (sales figures, pricing, policy, charging
+// infrastructure) rather than a product review of something irrelevant
+// to a Gulf buyer. This is what let the US-only tax-credit story through
+// last run without anyone deciding on purpose that global industry news
+// belongs on a Gulf-focused site — now it's an explicit yes/no instead
+// of an accident of keyword overlap.
+const GULF_SIGNAL = ['saudi', 'uae', 'dubai', 'abu dhabi', 'riyadh', 'gulf', 'gcc', 'mena', 'middle east']
+const INDUSTRY_SIGNAL = ['charging', 'battery range', 'incentive', 'subsidy', 'tax credit', 'price', 'sales', 'market share']
+
+function isRelevant(title, desc) {
+  const text = (title + ' ' + desc).toLowerCase()
+
+  if (HARD_EXCLUDE.some(k => text.includes(k))) return false
+  if (!CAR_SIGNAL.some(k => text.includes(k))) return false
+
+  const mentionsGulf     = GULF_SIGNAL.some(k => text.includes(k))
+  const mentionsIndustry = INDUSTRY_SIGNAL.some(k => text.includes(k))
+
+  return mentionsGulf || mentionsIndustry
+}
+
 const PROMPT = (title, desc) => `أنت كاتب محتوى متخصص في السيارات الكهربائية لمنطقة الخليج.
 بناءً على هذا الخبر:
 العنوان: ${title}
@@ -51,8 +91,7 @@ async function parseRSSFeed(feedUrl, label) {
       if (i >= 5) return false
       const title = $(el).find('title').first().text().trim()
       const desc  = $(el).find('description').first().text().replace(/<[^>]+>/g, '').trim()
-      const keywords = ['saudi','uae','dubai','gulf','byd','lucid','tesla','ev','electric','charging','battery','heat','incentive']
-      if (keywords.some(k => title.toLowerCase().includes(k) || desc.toLowerCase().includes(k)) && title)
+      if (isRelevant(title, desc) && title)
         items.push({ title, description: desc.slice(0, 500), label })
     })
     log.success(`${label}: ${items.length} relevant items`)
@@ -92,20 +131,30 @@ async function generateArticle(title, desc) {
   return null
 }
 
-function makeSlug(title) {
+function makeSlug(title, englishFallback) {
   const ts = Date.now().toString(36)
-  const w  = (title ?? '').toLowerCase().replace(/[^a-z0-9\s]/g,'').trim().split(/\s+/).filter(Boolean).slice(0,5).join('-')
-  return w ? `${w}-${ts}` : `article-${ts}`
+  const clean = (str) => (str ?? '').toLowerCase().replace(/[^a-z0-9\s]/g,'').trim().split(/\s+/).filter(Boolean).slice(0,6).join('-')
+
+  // Arabic titles get fully stripped by the regex above (Arabic
+  // characters are outside a-z0-9), which is why almost every article
+  // used to fall back to "article-<timestamp>" instead of a real slug.
+  // Prefer the original English RSS title when we have one — it
+  // survives the regex fine and makes a much more useful URL.
+  const fromEnglish = clean(englishFallback)
+  if (fromEnglish) return `${fromEnglish}-${ts}`
+
+  const fromTitle = clean(title)
+  return fromTitle ? `${fromTitle}-${ts}` : `article-${ts}`
 }
 
-async function saveArticle(a) {
+async function saveArticle(a, englishTitle) {
   try {
     const ex = await query('SELECT id FROM articles WHERE title_ar=$1 LIMIT 1', [a.title_ar])
     if (ex.rows.length) { log.warn(`Already exists: ${a.title_ar.slice(0,40)}`); return false }
     await query(
       `INSERT INTO articles (id,title_ar,slug,excerpt_ar,body_ar,category,seo_title,seo_description,published)
        VALUES (gen_random_uuid()::text,$1,$2,$3,$4,$5,$6,$7,false)`,
-      [a.title_ar, makeSlug(a.seo_title??a.title_ar), a.excerpt_ar??'', a.body_ar,
+      [a.title_ar, makeSlug(a.seo_title??a.title_ar, englishTitle), a.excerpt_ar??'', a.body_ar,
        a.category??'أخبار', a.seo_title??a.title_ar.slice(0,60), a.seo_description??a.excerpt_ar?.slice(0,155)??'']
     )
     log.success(`Saved draft: ${a.title_ar.slice(0,50)}`)
@@ -132,7 +181,7 @@ async function run() {
   for (const item of news.slice(0, 3)) {
     log.info(`\n📰 "${item.title.slice(0,60)}..."`)
     const article = await generateArticle(item.title, item.description)
-    if (article && await saveArticle(article)) saved++
+    if (article && await saveArticle(article, item.title)) saved++
     await new Promise(r => setTimeout(r, 1000))
   }
 
