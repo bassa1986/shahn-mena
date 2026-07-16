@@ -5,6 +5,15 @@ export const metadata: Metadata = {
   title: { default: 'شحن MENA — دليل السيارات الكهربائية', template: '%s | شحن MENA' },
   description: 'دليل شامل للسيارات الكهربائية في منطقة الخليج والشرق الأوسط',
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'https://shahn-mena.vercel.app'),
+  openGraph: {
+    type: 'website',
+    locale: 'ar_SA',
+    siteName: 'شحن MENA',
+    title: 'شحن MENA — دليل السيارات الكهربائية',
+    description: 'دليل شامل للسيارات الكهربائية في منطقة الخليج والشرق الأوسط',
+  },
+  // app/opengraph-image.tsx is picked up automatically by Next.js's
+  // file convention — no need to reference it manually here.
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

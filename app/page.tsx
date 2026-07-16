@@ -82,7 +82,7 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <div className="max-w-3xl mx-auto mt-16 grid grid-cols-3 gap-6">
+          <div className="max-w-3xl mx-auto mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             {[
               { value: stats.stations,   label: 'محطة شحن' },
               { value: stats.incentives, label: 'حافز حكومي' },
