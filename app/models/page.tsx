@@ -146,7 +146,7 @@ export default async function ModelsPage() {
 
                   <div className="mt-auto pt-3 border-t border-[#F5A623]/10">
                     <div className="font-tajawal font-black text-lg text-[#F5A623] mb-3" style={{ fontFamily: 'Tajawal, sans-serif' }}>
-                      {m.price_sar.toLocaleString('ar-SA')} ر.س
+                      {m.price_sar.toLocaleString('en-US')} ر.س
                     </div>
                     <div className="flex gap-2">
                       {m.syarah_url && (
@@ -166,7 +166,7 @@ export default async function ModelsPage() {
                     </div>
                     {age !== null && (
                       <div className={`mt-2 text-[10px] ${stale ? 'text-amber-400' : 'text-[#A89070]/60'}`} style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>
-                        {stale ? '⚠ ' : ''}آخر مراجعة للسعر: {new Date(m.reviewed_at!).toLocaleDateString('ar-SA')}
+                        {stale ? '⚠ ' : ''}آخر مراجعة للسعر: {new Date(m.reviewed_at!).toLocaleDateString('en-GB')}
                       </div>
                     )}
                   </div>

@@ -71,7 +71,7 @@ export default async function IncentivesPage() {
               style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}
             >
               {expired ? 'انتهى في: ' : 'صالح حتى: '}
-              {new Date(inc.valid_until).toLocaleDateString('ar-SA')}
+              {new Date(inc.valid_until).toLocaleDateString('en-GB')}
             </span>
           )}
           {inc.source_url && (
@@ -91,7 +91,7 @@ export default async function IncentivesPage() {
               className={`mt-2 pt-2 border-t border-[#F5A623]/5 text-[11px] ${stale ? 'text-amber-400' : 'text-[#A89070]/70'}`}
               style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}
             >
-              {stale ? '⚠ ' : ''}آخر مراجعة يدوية: {new Date(inc.reviewed_at!).toLocaleDateString('ar-SA')}
+              {stale ? '⚠ ' : ''}آخر مراجعة يدوية: {new Date(inc.reviewed_at!).toLocaleDateString('en-GB')}
               {stale ? ' — يحتاج تحقق' : ''}
             </div>
           )
