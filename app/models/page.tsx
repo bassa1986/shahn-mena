@@ -107,7 +107,7 @@ export default async function ModelsPage() {
               const age = daysSince(m.reviewed_at)
               const stale = age !== null && age > 120
               return (
-                <div key={m.id} className="card-surface flex flex-col">
+                <div key={m.id} id={m.slug} className="card-surface flex flex-col scroll-mt-24">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <span className="text-xs text-[#A89070]" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>{m.brand}</span>
                     {m.badge_ar && <span className="badge-gold text-[11px]" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>{m.badge_ar}</span>}

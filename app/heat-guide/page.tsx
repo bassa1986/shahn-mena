@@ -37,12 +37,12 @@ const TIPS = [
 ]
 
 const RANKING = [
-  { rank: 1, name: 'BYD Seal',        loss: 8,  system: 'OceanX Active Liquid', color: 'text-emerald-400' },
-  { rank: 2, name: 'Lucid Air',       loss: 15, system: 'OceanX AI Cooling',    color: 'text-emerald-400' },
-  { rank: 3, name: 'Tesla Model 3',   loss: 20, system: 'Active Liquid Gen3',   color: 'text-amber-400'   },
-  { rank: 4, name: 'MG4 Trophy',      loss: 23, system: 'Active Liquid',        color: 'text-amber-400'   },
-  { rank: 5, name: 'Kia EV6',         loss: 36, system: 'E-GMP Standard',       color: 'text-rose-400'    },
-  { rank: 6, name: 'Hyundai IONIQ 6', loss: 37, system: 'Standard TMS',         color: 'text-rose-400'    },
+  { rank: 1, slug: 'byd-seal',       name: 'BYD Seal',        loss: 8,  system: 'OceanX Active Liquid', color: 'text-emerald-400' },
+  { rank: 2, slug: 'lucid-air',      name: 'Lucid Air',       loss: 15, system: 'OceanX AI Cooling',    color: 'text-emerald-400' },
+  { rank: 3, slug: 'tesla-model-3',  name: 'Tesla Model 3',   loss: 20, system: 'Active Liquid Gen3',   color: 'text-amber-400'   },
+  { rank: 4, slug: 'mg4',            name: 'MG4 Trophy',      loss: 23, system: 'Active Liquid',        color: 'text-amber-400'   },
+  { rank: 5, slug: 'kia-ev6',        name: 'Kia EV6',         loss: 36, system: 'E-GMP Standard',       color: 'text-rose-400'    },
+  { rank: 6, slug: 'hyundai-ioniq6', name: 'Hyundai IONIQ 6', loss: 37, system: 'Standard TMS',         color: 'text-rose-400'    },
 ]
 
 const FAQ = [
@@ -116,7 +116,7 @@ export default async function HeatGuidePage() {
                     <p className="text-xs text-[#A89070]">{m.system}</p>
                   </div>
                   <div className={`font-bold text-sm ${m.color}`}>-{m.loss}٪</div>
-                  <Link href="/models" className="text-xs text-[#F5A623] flex items-center gap-0.5" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>
+                  <Link href={`/models#${m.slug}`} className="text-xs text-[#F5A623] flex items-center gap-0.5" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>
                     تفاصيل <ChevronLeft size={12} />
                   </Link>
                 </div>
