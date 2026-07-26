@@ -1,0 +1,24 @@
+name: Scrape Fuel Prices
+
+on:
+  schedule:
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        working-directory: scripts
+        run: npm install
+      - name: Run TCO scraper
+        working-directory: scripts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: node scrapers/tco-scraper.js

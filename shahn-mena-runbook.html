@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shahn MENA — Launch Runbook</title>
+<style>
+  :root {
+    --bg: #0b0f14;
+    --panel: #12181f;
+    --panel-2: #171f28;
+    --border: #232c37;
+    --text: #d8dee5;
+    --muted: #7c8896;
+    --gold: #f5a623;
+    --red: #e5484d;
+    --amber: #e8b339;
+    --green: #3ecf8e;
+    --mono: 'SF Mono', 'Consolas', 'Menlo', monospace;
+    --sans: -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    margin: 0;
+    line-height: 1.55;
+    padding-bottom: 80px;
+  }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 28px 24px 22px;
+    position: sticky;
+    top: 0;
+    background: rgba(11,15,20,0.96);
+    backdrop-filter: blur(6px);
+    z-index: 50;
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    color: var(--gold);
+    font-family: var(--mono);
+    letter-spacing: -0.3px;
+  }
+  header .sub {
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .readiness-bar {
+    margin-top: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .readiness-track {
+    flex: 1;
+    height: 8px;
+    background: var(--panel-2);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .readiness-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--red), var(--amber), var(--green));
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .readiness-pct {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--gold);
+    min-width: 52px;
+    text-align: right;
+  }
+  main {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  section {
+    margin-top: 42px;
+  }
+  section > h2 {
+    font-family: var(--mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--gold);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  section > h2 .count {
+    color: var(--muted);
+    font-weight: normal;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 12px;
+  }
+  .cmd-block {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin: 10px 0;
+  }
+  .cmd-block .label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  code, .mono {
+    font-family: var(--mono);
+    font-size: 13px;
+  }
+  .cmd-block code {
+    color: var(--green);
+    display: block;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .cmd-block .note {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 8px;
+    font-family: var(--sans);
+  }
+  .item {
+    display: flex;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .item:last-child { border-bottom: none; }
+  .item input[type=checkbox] {
+    margin-top: 3px;
+    width: 17px;
+    height: 17px;
+    accent-color: var(--gold);
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .item-body { flex: 1; }
+  .item-title {
+    font-weight: 600;
+    font-size: 14.5px;
+    margin-bottom: 4px;
+  }
+  .item.checked .item-title { color: var(--muted); text-decoration: line-through; }
+  .item-detail {
+    font-size: 13.5px;
+    color: var(--muted);
+  }
+  .item-detail code { color: #9db3c4; background: var(--panel-2); padding: 1px 5px; border-radius: 3px; }
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .tag.blocker { background: rgba(229,72,77,0.15); color: var(--red); border: 1px solid rgba(229,72,77,0.35); }
+  .tag.verify  { background: rgba(232,179,57,0.15); color: var(--amber); border: 1px solid rgba(232,179,57,0.35); }
+  .tag.info    { background: rgba(124,136,150,0.15); color: var(--muted); border: 1px solid var(--border); }
+  .tag.done    { background: rgba(62,207,142,0.15); color: var(--green); border: 1px solid rgba(62,207,142,0.35); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  th, td {
+    text-align: left;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--muted);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  td.status-active { color: var(--green); font-family: var(--mono); font-size: 12.5px; }
+  td.status-inactive { color: var(--red); font-family: var(--mono); font-size: 12.5px; }
+  td.status-unverified { color: var(--amber); font-family: var(--mono); font-size: 12.5px; }
+  .env-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .env-row {
+    display: grid;
+    grid-template-columns: 220px 1fr 90px;
+    gap: 12px;
+    padding: 10px 12px;
+    background: var(--panel-2);
+    border-radius: 6px;
+    align-items: center;
+    font-size: 13px;
+  }
+  .env-row .var-name { font-family: var(--mono); color: var(--gold); }
+  .env-row .var-desc { color: var(--muted); font-size: 12.5px; }
+  .scope-server { color: var(--red); font-family: var(--mono); font-size: 11px; text-align: right; }
+  .scope-public { color: var(--green); font-family: var(--mono); font-size: 11px; text-align: right; }
+  .docs-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .docs-item:last-child { border-bottom: none; }
+  .docs-item .fname { font-family: var(--mono); color: var(--gold); font-size: 13px; }
+  .docs-item .desc { color: var(--muted); font-size: 13px; margin-top: 3px; }
+  footer {
+    max-width: 920px;
+    margin: 60px auto 0;
+    padding: 20px 24px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+  .callout {
+    border-left: 3px solid var(--red);
+    background: rgba(229,72,77,0.08);
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    font-size: 13.5px;
+    margin-bottom: 16px;
+  }
+  .callout.amber { border-color: var(--amber); background: rgba(232,179,57,0.08); }
+  .callout strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&gt; shahn-mena / launch runbook</h1>
+  <div class="sub">bassa1986/shahn-mena · live at shahn-mena.vercel.app · generated from direct source inspection</div>
+  <div class="readiness-bar">
+    <div class="readiness-track"><div class="readiness-fill" id="fill"></div></div>
+    <div class="readiness-pct" id="pct">0%</div>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <h2>Quick start</h2>
+
+  <div class="cmd-block">
+    <div class="label">Run the site locally</div>
+    <code>cd "C:\the websites\shahn-mena\shahn-mena"
+npm install
+npm run dev</code>
+    <div class="note">Requires <code>.env.local</code> with at least <code>DATABASE_URL</code> set, or every page 500s on load.</div>
+  </div>
+
+  <div class="cmd-block">
+    <div class="label">Push a change live</div>
+    <code>git add -A
+git commit -m "message"
+git push origin main</code>
+    <div class="note">Vercel auto-builds on push to <code>main</code>. No staging branch is configured — every push to main is a production deploy.</div>
+  </div>
+
+  <div class="cmd-block">
+    <div class="label">Manually refresh charging stations / incentives / fuel prices</div>
+    <code>cd scripts
+npm install
+node scrapers/charging-scraper.js
+node scrapers/incentives-scraper.js
+node scrapers/tco-scraper.js</code>
+    <div class="note">Requires <code>DATABASE_URL</code> in <code>scripts/.env.local</code> or as a shell env var. These also run on a GitHub Actions schedule — see Automation section.</div>
+  </div>
+
+  <div class="cmd-block">
+    <div class="label">Check what's actually live right now</div>
+    <code>https://shahn-mena.vercel.app
+https://github.com/bassa1986/shahn-mena/actions</code>
+    <div class="note">This document was built from a local sandbox copy of the code, not a live git checkout — see footer.</div>
+  </div>
+</section>
+
+<section>
+  <h2>Must-fix before launch <span class="count" id="count-blockers"></span></h2>
+
+  <div class="callout">
+    <strong>Do this first, regardless of anything else on this page:</strong> your live Neon <code>DATABASE_URL</code>, including the database password, was pasted in plaintext into the chat session used to build this project. That transcript is not a secure secrets store. Rotate the Neon database password (or reset the connection string) and update it in <code>.env.local</code> and in Vercel's environment variables before doing anything else.
+  </div>
+
+  <div class="panel">
+    <div class="item" data-id="b1">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">Rotate the Neon database credential <span class="tag blocker">blocker</span></div>
+        <div class="item-detail">The full <code>postgresql://neondb_owner:...@ep-falling-frost-...neon.tech/neondb</code> string, password included, was typed into this conversation in cleartext. Treat it as burned. Reset it in the Neon console, then update <code>.env.local</code> locally and the <code>DATABASE_URL</code> value in Vercel → Project → Environment Variables.</div>
+      </div>
+    </div>
+
+    <div class="item" data-id="b2">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">Generate Articles GitHub Action is missing its <code>chalk</code> dependency <span class="tag blocker">blocker</span></div>
+        <div class="item-detail"><code>scripts/scrapers/articles-generator.js</code> does <code>import chalk from 'chalk'</code>, but <code>scripts/package.json</code> only lists <code>axios</code>, <code>cheerio</code>, <code>dotenv</code>, <code>pg</code>. <code>chalk</code> is not installed by <code>npm install</code> in that folder, so the workflow crashes on a missing module before it does anything useful. Add <code>"chalk": "^5.3.0"</code> to <code>scripts/package.json</code> dependencies and re-run.</div>
+      </div>
+    </div>
+
+    <div class="item" data-id="b3">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">Confirm <code>DATABASE_URL</code> exists as a GitHub Actions secret <span class="tag verify">verify</span></div>
+        <div class="item-detail">The charging-stations scraper run succeeded on run #19 (23s), which only works if <code>secrets.DATABASE_URL</code> is set at <strong>Settings → Secrets and variables → Actions</strong>. Confirm it's still set — and that it matches whatever new value you land on after the rotation above, or the scrapers will silently start failing.</div>
+      </div>
+    </div>
+
+    <div class="item" data-id="b4">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title"><code>/contact</code> page's build-safety is unconfirmed <span class="tag verify">verify</span></div>
+        <div class="item-detail">An earlier version of <code>app/contact/page.tsx</code> used a server-side <code>redirect('mailto:...')</code> with Arabic text URL-encoded into it, which broke <code>next build</code> on Vercel with a ByteString header error. A client-side fix (<code>'use client'</code> + <code>useEffect</code> + <code>window.location.href</code>) was given later in this session, but no subsequent successful build log was shown confirming it was actually committed and deployed. Open <code>app/contact/page.tsx</code> in the real repo and confirm it's the client-side version, not the old server <code>redirect()</code> version — and confirm nothing links to <code>/contact</code> if you meant to drop the route (current Navbar has no link to it; Footer uses a direct <code>mailto:</code> anchor instead, which does not depend on this route at all).</div>
+      </div>
+    </div>
+
+    <div class="item" data-id="b5">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">No database schema file exists in source control <span class="tag blocker">blocker</span></div>
+        <div class="item-detail">There is no <code>.sql</code> file or <code>database/</code> folder anywhere in the current codebase. The <code>articles</code>, <code>charging_networks</code>, <code>incentives</code>, and <code>tco_params</code> tables exist only inside your live Neon instance, created by hand earlier in this build process. If that Neon project is ever lost, reset, or you need to recreate it, there is currently nothing in the repo to rebuild the schema from — you'd be reconstructing table structure from scattered <code>SELECT</code>/<code>INSERT</code> statements across the scraper scripts and page files. Export the schema (<code>pg_dump --schema-only</code> or Neon's console) into a committed <code>database/schema.sql</code>.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Content &amp; data-quality gaps <span class="count" id="count-content"></span></h2>
+
+  <div class="panel">
+    <div class="item" data-id="c1">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">Incentives page shows no distinction between active and expired entries</div>
+        <div class="item-detail"><code>app/incentives/page.tsx</code> prints <code>valid_until</code> as plain text (<code>صالح حتى: ...</code>) with no comparison against today's date. Of the 10 hardcoded incentive rows seeded by <code>scripts/scrapers/incentives-scraper.js</code>, at least 5 carry a <code>valid_until</code> of <code>2025-12-31</code> or earlier — already in the past relative to current dates. They'll keep displaying as if still valid, with a past date, until someone either updates the rows or adds expiry logic to the page.</div>
+      </div>
+    </div>
+
+    <div class="item" data-id="c2">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">"Scrapers" for incentives and fuel prices are static hardcoded lists, not live scrapes</div>
+        <div class="item-detail">Despite the filenames, <code>incentives-scraper.js</code> and <code>tco-scraper.js</code> don't fetch anything from government or fuel-price sites — they push a fixed JS array (10 incentive rows; 3 country fuel/electricity rows for SA/AE/MA) into the DB every time they run. Only <code>charging-scraper.js</code> does a real live fetch, from the OpenChargeMap public API. This is fine as a v1, but "runs on a schedule" doesn't mean this data gets fresher over time — it means the same static numbers get re-written on schedule.</div>
+      </div>
+    </div>
+
+    <div class="item" data-id="c3">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">EV Models page is 6 hardcoded cards, not database-driven</div>
+        <div class="item-detail"><code>app/models/page.tsx</code> defines a static <code>MODELS</code> array (Lucid Air, BYD Seal, Tesla Model 3, Hyundai IONIQ 6, Kia EV6, MG4) with hardcoded specs, prices, and pros/cons directly in the component. Only the electricity/fuel price panel at the top of that page reads from the DB. Adding, removing, or re-pricing a model means editing and redeploying code, not updating data.</div>
+      </div>
+    </div>
+
+    <div class="item" data-id="c4">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">No path exists to review or publish new scraped articles</div>
+        <div class="item-detail"><code>articles-generator.js</code> inserts new articles with <code>published: false</code> and logs <code>"Publish at: /admin/articles"</code> — but <code>app/admin</code>, <code>app/api/admin</code>, and <code>components/admin</code> are all empty directories in the current codebase. There is no admin UI at all right now. The 10 articles currently live were inserted directly with a one-off Node script setting <code>published: true</code> manually, bypassing this pipeline entirely. If the Generate Articles workflow does start succeeding (see blocker above), its output will accumulate as unpublished drafts with no way to review or publish them short of writing SQL by hand against Neon.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Revenue-relevant integrations</h2>
+  <div class="panel">
+    <table>
+      <tr><th>Integration</th><th>State</th><th>Reason</th></tr>
+      <tr>
+        <td>Syarah.com affiliate links</td>
+        <td class="status-unverified">tracking tags only</td>
+        <td>Every model card links out with <code>?utm_source=shahnamena&utm_medium=affiliate</code>, but nothing in the codebase or this build process confirms a registered, paying affiliate agreement with Syarah exists. These are UTM parameters, not proof of a commission relationship — verify whether an actual partner account exists before assuming this earns anything.</td>
+      </tr>
+      <tr>
+        <td>Dubizzle affiliate links</td>
+        <td class="status-unverified">tracking tags only</td>
+        <td>Same situation as Syarah above — outbound link with UTM params, no confirmed partner account.</td>
+      </tr>
+      <tr>
+        <td>Google AdSense</td>
+        <td class="status-inactive">not wired up</td>
+        <td>The homepage has a static "إعلان" (Ad) placeholder <code>&lt;div&gt;</code> — plain text, no script tag, no publisher ID anywhere in the current code or env vars. An AdSense integration existed in an earlier iteration of this project but is not present in the current rebuilt codebase.</td>
+      </tr>
+      <tr>
+        <td>Newsletter (Mailchimp)</td>
+        <td class="status-inactive">deliberately removed</td>
+        <td>Removed on your explicit instruction earlier in this build. This is not an oversight — no Mailchimp env vars or components remain.</td>
+      </tr>
+      <tr>
+        <td>Contact form (Google Forms)</td>
+        <td class="status-inactive">deliberately removed</td>
+        <td>Replaced with a direct <code>mailto:</code> link in the footer on your explicit instruction. Also not an oversight.</td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Automation / scheduled jobs</h2>
+  <div class="panel">
+    <table>
+      <tr><th>Workflow</th><th>Schedule</th><th>Wired up?</th></tr>
+      <tr>
+        <td>Scrape Charging Stations</td>
+        <td class="mono">every 6h</td>
+        <td class="status-active">yes — last run succeeded</td>
+      </tr>
+      <tr>
+        <td>Scrape Incentives</td>
+        <td class="mono">daily 06:00 UTC</td>
+        <td class="status-unverified">verify — last visible run in this session failed, before scraper files existed in repo. Re-run manually to confirm it now passes.</td>
+      </tr>
+      <tr>
+        <td>Scrape Fuel Prices (TCO)</td>
+        <td class="mono">Mondays 07:00 UTC</td>
+        <td class="status-unverified">verify — same situation as Incentives above, not confirmed re-run since fix.</td>
+      </tr>
+      <tr>
+        <td>Generate Articles</td>
+        <td class="mono">daily 08:00 UTC</td>
+        <td class="status-inactive">no — will crash on missing <code>chalk</code> dependency until that's added (see Must-Fix section)</td>
+      </tr>
+    </table>
+
+    <div class="callout amber" style="margin-top:16px;">
+      <strong>Deliberate tradeoff worth knowing:</strong> <code>articles-generator.js</code> tries a local Ollama instance at <code>localhost:11434</code> first, then falls back to Groq's API. On GitHub's hosted runners, Ollama will never be running, so every CI run wastes a few seconds on a connection attempt that's guaranteed to fail before it falls through to Groq. Harmless, but it means the workflow is fully dependent on <code>GROQ_API_KEY</code> being set as a <strong>GitHub Actions secret</strong> specifically — not a Vercel environment variable. Groq is never called by the deployed Next.js app itself; it's only used by this Node script. Setting <code>GROQ_API_KEY</code> in Vercel (as suggested earlier in this build) does nothing for this workflow.
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Post-launch / not urgent</h2>
+  <div class="panel">
+    <div class="item" data-id="p1">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">Dead admin code should be removed or finished, not left half-built</div>
+        <div class="item-detail"><code>lib/auth.ts</code> (JWT sign/verify, admin password check, cookie helpers) is imported by nothing in the current codebase — it's orphaned. <code>middleware.ts</code> still blocks <code>/admin/*</code> in production, guarding routes that don't exist. Either finish the admin dashboard (needed anyway to publish scraped article drafts, see above) or delete this dead code to reduce confusion for the next person who opens the repo.</div>
+      </div>
+    </div>
+    <div class="item" data-id="p2">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">Hardcoded fallback JWT secret in <code>lib/auth.ts</code></div>
+        <div class="item-detail">If <code>ADMIN_JWT_SECRET</code> is ever left unset and this dead code is later wired up without noticing, it silently signs tokens with the literal string <code>'fallback-secret-change-this-in-production'</code>, which is now public in this codebase's history. Low risk today only because nothing calls this file yet.</div>
+      </div>
+    </div>
+    <div class="item" data-id="p3">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">OpenChargeMap API key is hardcoded in source rather than read from an env var</div>
+        <div class="item-detail"><code>charging-scraper.js</code> has the key as a literal string. It's described as a shared free-tier key, so severity is low, but it's still a committed credential in a public GitHub repo rather than an environment variable — worth moving for hygiene.</div>
+      </div>
+    </div>
+    <div class="item" data-id="p4">
+      <input type="checkbox">
+      <div class="item-body">
+        <div class="item-title">No README or any documentation file exists in the repo</div>
+        <div class="item-detail">Confirmed by direct search — zero <code>.md</code> files anywhere. Anyone else touching this project starts from nothing.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>System reference — environment variables</h2>
+  <div class="panel">
+    <div class="env-grid">
+      <div class="env-row">
+        <div class="var-name">DATABASE_URL</div>
+        <div class="var-desc">Neon Postgres connection string. Read server-side only via dynamic <code>import('@neondatabase/serverless')</code> inside server components and Node scripts — never bundled to the client. Required for literally every page to render anything.</div>
+        <div class="scope-server">server-only</div>
+      </div>
+      <div class="env-row">
+        <div class="var-name">NEXT_PUBLIC_SITE_URL</div>
+        <div class="var-desc">Used in <code>app/layout.tsx</code> for <code>metadataBase</code>. Meant to be public, safe as-is.</div>
+        <div class="scope-public">public ok</div>
+      </div>
+      <div class="env-row">
+        <div class="var-name">GROQ_API_KEY / GROQ_MODEL</div>
+        <div class="var-desc">Used only by <code>scripts/scrapers/articles-generator.js</code>. Must be a <strong>GitHub Actions secret</strong>, not a Vercel variable — the deployed app never calls Groq.</div>
+        <div class="scope-server">CI secret only</div>
+      </div>
+      <div class="env-row">
+        <div class="var-name">OLLAMA_URL / OLLAMA_MODEL</div>
+        <div class="var-desc">Local-machine-only fallback for the same article generator script. Meaningless in CI or Vercel; only relevant if you run the scraper on your own PC with Ollama installed.</div>
+        <div class="scope-server">local-only</div>
+      </div>
+      <div class="env-row">
+        <div class="var-name">ADMIN_PASSWORD / ADMIN_JWT_SECRET</div>
+        <div class="var-desc">Referenced only by the currently-orphaned <code>lib/auth.ts</code>. Not required for the site to function today. Confirm these are <em>not</em> set in Vercel to avoid dangling unused secrets, unless you're actively finishing the admin dashboard.</div>
+        <div class="scope-server">unused currently</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px;">
+    <strong style="font-size:13.5px;">Local vs. production, as this specific setup actually differs:</strong>
+    <ul style="font-size:13.5px; color:var(--muted); margin-top:10px; padding-left:20px;">
+      <li>Local dev reads secrets from <code>.env.local</code> (gitignored); Vercel reads from its own dashboard-configured env vars — these are two separate stores you must update independently, e.g. after rotating the DB password.</li>
+      <li><code>middleware.ts</code> only blocks <code>/admin/*</code> when <code>NODE_ENV === 'production'</code>. Locally with <code>npm run dev</code>, that block doesn't apply — moot today since no admin pages exist, but worth remembering if the admin dashboard gets built later.</li>
+      <li>GitHub Actions runs on Node 20 (explicitly pinned in the workflow files after Node 24 became the runner default and broke <code>setup-node</code>'s caching step). Vercel manages its own Node runtime separately — the two are not linked and don't need to match.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>Docs index</h2>
+  <div class="panel">
+    <div class="docs-item">
+      <div class="desc" style="color:var(--muted);">No README, no <code>/docs</code> folder, and no <code>.md</code> file of any kind currently exists anywhere in this repository. This section is intentionally empty because there is genuinely nothing to index yet.</div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Figures on this page (33 charging stations, 18 incentives, 10 articles, 6 static models, 4 GitHub Actions workflows, zero admin routes, zero doc files) were checked directly against the project's actual source files and live-site screenshots at the time this runbook was generated. This is a snapshot, not a permanent record — the codebase has changed hands between a sandboxed working copy and a separately-edited local/GitHub copy several times during this build, so treat anything marked "verify" as genuinely unconfirmed rather than assumed-fine. Regenerate this document against the real repository after making changes rather than relying on it long-term.
+</footer>
+
+<script>
+  const ids = ['b1','b2','b3','b4','b5','c1','c2','c3','c4','p1','p2','p3','p4'];
+  const STORAGE_KEY = 'shahn-mena-runbook-state';
+
+  function loadState() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+    catch { return {}; }
+  }
+  function saveState(state) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+  function updateReadiness() {
+    const state = loadState();
+    const total = ids.length;
+    const checked = ids.filter(id => state[id]).length;
+    const pct = Math.round((checked / total) * 100);
+    document.getElementById('fill').style.width = pct + '%';
+    document.getElementById('pct').textContent = pct + '%';
+
+    const blockerIds = ['b1','b2','b3','b4','b5'];
+    const contentIds = ['c1','c2','c3','c4'];
+    const bDone = blockerIds.filter(id => state[id]).length;
+    const cDone = contentIds.filter(id => state[id]).length;
+    document.getElementById('count-blockers').textContent = bDone + ' / ' + blockerIds.length + ' resolved';
+    document.getElementById('count-content').textContent = cDone + ' / ' + contentIds.length + ' resolved';
+  }
+
+  function init() {
+    const state = loadState();
+    document.querySelectorAll('.item').forEach(item => {
+      const id = item.getAttribute('data-id');
+      const checkbox = item.querySelector('input[type=checkbox]');
+      if (state[id]) {
+        checkbox.checked = true;
+        item.classList.add('checked');
+      }
+      checkbox.addEventListener('change', () => {
+        const s = loadState();
+        s[id] = checkbox.checked;
+        saveState(s);
+        item.classList.toggle('checked', checkbox.checked);
+        updateReadiness();
+      });
+    });
+    updateReadiness();
+  }
+  init();
+</script>
+
+</body>
+</html>
