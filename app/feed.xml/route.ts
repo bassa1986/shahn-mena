@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { queryWithRetry } from '@/lib/db'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://shahn-mena.vercel.app'
 
@@ -17,9 +18,7 @@ function escapeXml(str: string): string {
 
 async function getArticles(): Promise<Article[]> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql(
+    const rows = await queryWithRetry(
       'SELECT slug, title_ar, excerpt_ar, created_at FROM articles WHERE published = true ORDER BY created_at DESC LIMIT 30'
     )
     return rows as Article[]

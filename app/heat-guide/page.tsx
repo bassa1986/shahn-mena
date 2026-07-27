@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import FaqJsonLd from '@/components/FaqJsonLd'
+import { queryWithRetry } from '@/lib/db'
 
 export const revalidate = 86400
 export const metadata: Metadata = {
@@ -18,11 +19,9 @@ type ArticleRow = { slug: string; title_ar: string; category: string | null }
 
 async function getLiveData(): Promise<{ tco: TCORow[]; articles: ArticleRow[] }> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
     const [tco, articles] = await Promise.all([
-      sql('SELECT country, electricity_rate_kwh FROM tco_params ORDER BY country'),
-      sql('SELECT title_ar, slug, category FROM articles WHERE published = true ORDER BY created_at DESC LIMIT 4'),
+      queryWithRetry('SELECT country, electricity_rate_kwh FROM tco_params ORDER BY country'),
+      queryWithRetry('SELECT title_ar, slug, category FROM articles WHERE published = true ORDER BY created_at DESC LIMIT 4'),
     ])
     return { tco: tco as TCORow[], articles: articles as ArticleRow[] }
   } catch (err) {

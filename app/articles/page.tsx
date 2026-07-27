@@ -3,6 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { queryWithRetry } from '@/lib/db'
 
 export const revalidate = 3600
 export const metadata: Metadata = {
@@ -15,9 +16,7 @@ type Article = { slug: string; title_ar: string; category: string | null; excerp
 
 async function getArticles(): Promise<Article[]> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql('SELECT slug, title_ar, category, excerpt_ar, featured_image_url FROM articles WHERE published = true ORDER BY created_at DESC LIMIT 20')
+    const rows = await queryWithRetry('SELECT slug, title_ar, category, excerpt_ar, featured_image_url FROM articles WHERE published = true ORDER BY created_at DESC LIMIT 20')
     return rows as Article[]
   } catch (err) {
     console.error('Failed to load articles list:', err)

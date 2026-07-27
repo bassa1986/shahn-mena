@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { queryWithRetry } from '@/lib/db'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://shahn-mena.vercel.app'
 
@@ -7,9 +8,7 @@ type ModelRow = { slug: string; updated_at: string }
 
 async function getArticleSlugs(): Promise<ArticleRow[]> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql('SELECT slug, created_at FROM articles WHERE published = true ORDER BY created_at DESC')
+    const rows = await queryWithRetry('SELECT slug, created_at FROM articles WHERE published = true ORDER BY created_at DESC')
     return rows as ArticleRow[]
   } catch (err) {
     console.error('Failed to load article slugs for sitemap:', err)
@@ -21,9 +20,7 @@ async function getArticleSlugs(): Promise<ArticleRow[]> {
 
 async function getModelSlugs(): Promise<ModelRow[]> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql('SELECT slug, updated_at FROM ev_models WHERE active = true')
+    const rows = await queryWithRetry('SELECT slug, updated_at FROM ev_models WHERE active = true')
     return rows as ModelRow[]
   } catch (err) {
     console.error('Failed to load model slugs for sitemap:', err)

@@ -4,7 +4,42 @@ if (!process.env.DATABASE_URL) {
   throw new Error('Missing DATABASE_URL environment variable.')
 }
 
-export const sql = neon(process.env.DATABASE_URL)
+const sql = neon(process.env.DATABASE_URL)
+
+/**
+ * Runs a query with automatic retries on transient connection failures
+ * (timeouts, brief network blips). The @neondatabase/serverless driver
+ * makes an HTTP request per query, which occasionally times out even on
+ * a healthy connection — a bare failure was surfacing as a page-level
+ * 404/empty-state for users on otherwise-successful requests. Retrying
+ * once or twice with a short backoff absorbs that without callers having
+ * to change their existing try/catch handling.
+ */
+export async function queryWithRetry<T = any>(
+  queryText: string,
+  params: any[] = [],
+  retries = 2,
+  delayMs = 300
+): Promise<T[]> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return (await sql(queryText, params as any)) as T[]
+    } catch (err) {
+      lastError = err
+      if (attempt < retries) {
+        console.warn(
+          `DB query failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${delayMs}ms...`,
+          err instanceof Error ? err.message : err
+        )
+        await new Promise(resolve => setTimeout(resolve, delayMs))
+      }
+    }
+  }
+  throw lastError
+}
+
+export { sql }
 
 export type Article = {
   id: string; title_ar: string; slug: string; excerpt_ar: string | null

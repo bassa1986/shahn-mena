@@ -3,6 +3,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import { Shield, ExternalLink, Clock } from 'lucide-react'
+import { queryWithRetry } from '@/lib/db'
 
 export const revalidate = 3600
 export const metadata: Metadata = {
@@ -15,9 +16,7 @@ type Incentive = { id: string; country: string; title_ar: string; description_ar
 
 async function getIncentives(): Promise<Incentive[]> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql('SELECT id, country, title_ar, description_ar, value, valid_until, source_url, reviewed_at FROM incentives ORDER BY country, title_ar')
+    const rows = await queryWithRetry('SELECT id, country, title_ar, description_ar, value, valid_until, source_url, reviewed_at FROM incentives ORDER BY country, title_ar')
     return rows as Incentive[]
   } catch (err) {
     console.error('Failed to load incentives:', err)

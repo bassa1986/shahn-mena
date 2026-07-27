@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Zap, Battery, MapPin, Calculator, Shield, ChevronLeft, Thermometer, Car } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import { queryWithRetry } from '@/lib/db'
 
 export const revalidate = 3600
 
@@ -17,12 +18,10 @@ type Stats   = { stations: string; incentives: string; articles: string }
 
 async function getStats(): Promise<Stats> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
     const [s, i, a] = await Promise.all([
-      sql('SELECT COUNT(*) as count FROM charging_networks'),
-      sql('SELECT COUNT(*) as count FROM incentives'),
-      sql('SELECT COUNT(*) as count FROM articles WHERE published = true'),
+      queryWithRetry('SELECT COUNT(*) as count FROM charging_networks'),
+      queryWithRetry('SELECT COUNT(*) as count FROM incentives'),
+      queryWithRetry('SELECT COUNT(*) as count FROM articles WHERE published = true'),
     ])
     return {
       stations:   String((s[0] as { count: number }).count  ?? 0),
@@ -37,9 +36,7 @@ async function getStats(): Promise<Stats> {
 
 async function getLatestArticles(): Promise<Article[]> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql('SELECT title_ar, slug, category, excerpt_ar FROM articles WHERE published = true ORDER BY created_at DESC LIMIT 3')
+    const rows = await queryWithRetry('SELECT title_ar, slug, category, excerpt_ar FROM articles WHERE published = true ORDER BY created_at DESC LIMIT 3')
     return rows as Article[]
   } catch (err) {
     console.error('Failed to load featured articles:', err)

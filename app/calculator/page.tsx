@@ -6,6 +6,7 @@ import Breadcrumbs from '@/components/Breadcrumbs'
 import FaqJsonLd from '@/components/FaqJsonLd'
 import TCOCalculator from '@/components/TCOCalculator'
 import { Battery, Thermometer, ChevronLeft } from 'lucide-react'
+import { queryWithRetry } from '@/lib/db'
 
 export const metadata: Metadata = {
   title: 'حاسبة توفير السيارة الكهربائية | شحن MENA',
@@ -23,9 +24,7 @@ type TCOParam = { country: string; electricity_rate_kwh: number; avg_fuel_price:
 
 async function getTCOParams(): Promise<TCOParam[]> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql('SELECT country, electricity_rate_kwh, avg_fuel_price FROM tco_params ORDER BY country')
+    const rows = await queryWithRetry('SELECT country, electricity_rate_kwh, avg_fuel_price FROM tco_params ORDER BY country')
     return rows as TCOParam[]
   } catch (err) {
     console.error('Failed to load TCO params (calculator page):', err)

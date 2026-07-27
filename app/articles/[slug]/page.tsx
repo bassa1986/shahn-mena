@@ -6,6 +6,7 @@ import sanitizeHtml from 'sanitize-html'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Breadcrumbs from '@/components/Breadcrumbs'
+import { queryWithRetry } from '@/lib/db'
 
 export const revalidate = 3600
 
@@ -26,9 +27,7 @@ type RelatedArticle = { slug: string; title_ar: string; featured_image_url: stri
 async function getRelatedArticles(category: string | null, currentSlug: string): Promise<RelatedArticle[]> {
   if (!category) return []
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql(
+    const rows = await queryWithRetry(
       'SELECT slug, title_ar, featured_image_url FROM articles WHERE published = true AND category = $1 AND slug != $2 ORDER BY created_at DESC LIMIT 3',
       [category, currentSlug]
     )
@@ -58,9 +57,7 @@ function sanitizeArticleBody(html: string): string {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql('SELECT seo_title, seo_description, featured_image_url FROM articles WHERE slug = $1 AND published = true LIMIT 1', [params.slug])
+    const rows = await queryWithRetry('SELECT seo_title, seo_description, featured_image_url FROM articles WHERE slug = $1 AND published = true LIMIT 1', [params.slug])
     if (!rows[0]) return { title: 'مقال | شحن MENA' }
     const row = rows[0] as { seo_title: string | null; seo_description: string | null; featured_image_url: string | null }
     return {
@@ -84,9 +81,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
   let article: Article | null = null
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql(
+    const rows = await queryWithRetry(
       'SELECT title_ar, body_ar, category, created_at, seo_description, json_ld, featured_image_url FROM articles WHERE slug = $1 AND published = true LIMIT 1',
       [params.slug]
     )

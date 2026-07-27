@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import { MapPin, Zap, Navigation } from 'lucide-react'
+import { queryWithRetry } from '@/lib/db'
 
 export const revalidate = 3600
 export const metadata: Metadata = {
@@ -20,9 +21,7 @@ type Station = {
 
 async function getStations(): Promise<Station[]> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql('SELECT id, name, network_provider, country, city, speed_kw, connector_type, status, lat, lng FROM charging_networks ORDER BY country, city LIMIT 150')
+    const rows = await queryWithRetry('SELECT id, name, network_provider, country, city, speed_kw, connector_type, status, lat, lng FROM charging_networks ORDER BY country, city LIMIT 150')
     return rows as Station[]
   } catch (err) {
     console.error('Failed to load charging stations:', err)

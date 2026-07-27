@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import { Zap, Battery, Thermometer, ExternalLink, ChevronLeft } from 'lucide-react'
+import { queryWithRetry } from '@/lib/db'
 
 export const revalidate = 3600
 
@@ -31,9 +32,7 @@ type Model = {
 
 async function getModel(slug: string): Promise<Model | null> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql(
+    const rows = await queryWithRetry(
       'SELECT slug, brand, name_ar, badge_ar, range_km, range_hot_km, charge_speed_kw, heat_loss_pct, price_sar, pros_ar, cons_ar, syarah_url, dubizzle_url, image_url, reviewed_at FROM ev_models WHERE slug = $1 AND active = true LIMIT 1',
       [slug]
     )

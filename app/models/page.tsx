@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Breadcrumbs from '@/components/Breadcrumbs'
 import { Zap, Battery, Thermometer, ExternalLink } from 'lucide-react'
+import { queryWithRetry } from '@/lib/db'
 
 export const revalidate = 3600
 export const metadata: Metadata = {
@@ -36,9 +37,7 @@ type TCOParam = { country: string; electricity_rate_kwh: number; avg_fuel_price:
 
 async function getModels(): Promise<Model[]> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql(
+    const rows = await queryWithRetry(
       'SELECT id, slug, brand, name_ar, badge_ar, range_km, range_hot_km, charge_speed_kw, heat_loss_pct, price_sar, pros_ar, cons_ar, syarah_url, dubizzle_url, image_url, reviewed_at FROM ev_models WHERE active = true ORDER BY display_order'
     )
     return rows as Model[]
@@ -50,9 +49,7 @@ async function getModels(): Promise<Model[]> {
 
 async function getTCOParams(): Promise<TCOParam[]> {
   try {
-    const { neon } = await import('@neondatabase/serverless')
-    const sql = neon(process.env.DATABASE_URL!)
-    const rows = await sql('SELECT country, electricity_rate_kwh, avg_fuel_price FROM tco_params ORDER BY country')
+    const rows = await queryWithRetry('SELECT country, electricity_rate_kwh, avg_fuel_price FROM tco_params ORDER BY country')
     return rows as TCOParam[]
   } catch (err) {
     console.error('Failed to load TCO params (models page):', err)
