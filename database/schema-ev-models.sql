@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS ev_models (
   cons_ar          TEXT[] NOT NULL DEFAULT '{}',
   syarah_url       TEXT,
   dubizzle_url     TEXT,
+  image_url        TEXT,
   display_order    INT NOT NULL DEFAULT 0,
   active           BOOLEAN NOT NULL DEFAULT true,
   reviewed_at      DATE DEFAULT CURRENT_DATE,

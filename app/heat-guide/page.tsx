@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { Thermometer, Battery, Zap, Shield, ChevronLeft, AlertTriangle, CheckCircle } from 'lucide-react'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import Breadcrumbs from '@/components/Breadcrumbs'
+import FaqJsonLd from '@/components/FaqJsonLd'
 
 export const revalidate = 86400
 export const metadata: Metadata = {
@@ -30,7 +32,7 @@ async function getLiveData(): Promise<{ tco: TCORow[]; articles: ArticleRow[] }>
 }
 
 const TIPS = [
-  { icon: '🌡', title: 'افهم حدود البطارية',          body: 'تعمل البطاريات بكفاءة مثلى بين 20-35°C. عند 45°C تنخفض السعة 8-37٪ حسب نظام التبريد.',                         badge: 'علم التقنية',   color: 'text-sky-400'     },
+  { icon: '🌡', title: 'افهم حدود البطارية',          body: 'تعمل البطاريات بكفاءة مثلى بين 20-35°C. في الحرارة الشديدة (+40°C) مع قيادة سريعة، تُظهر بيانات ميدانية حقيقية فقدان مدى يصل إلى 30-44٪.',                         badge: 'علم التقنية',   color: 'text-sky-400'     },
   { icon: '☀️', title: 'لا تترك السيارة تحت الشمس',   body: 'الحرارة الداخلية تتجاوز 70°C تحت الشمس المباشرة. فعّل وضع حماية البطارية دائماً قبل الخروج.',                  badge: 'نصيحة ذهبية',  color: 'text-amber-400'   },
   { icon: '⚡', title: 'تجنب الشحن السريع في الحر',    body: 'فوق 42°C يُفضَّل الشحن الليلي AC لإعطاء البطارية وقتاً كافياً للتبريد الطبيعي.',                              badge: 'تحذير مهم',    color: 'text-rose-400'    },
   { icon: '🔋', title: 'ابقَ بين 20-80٪',             body: 'الشحن لـ80٪ يطيل عمر البطارية 2-3 أضعاف في مناخ الخليج مقارنة بالشحن الكامل.',                                badge: 'ذهبية',         color: 'text-emerald-400' },
@@ -38,20 +40,17 @@ const TIPS = [
   { icon: '🏠', title: 'فضّل الشحن المنزلي الليلي',   body: 'الشحن ليلاً عند 22-28°C يمنح أفضل كفاءة وأطول عمر للبطارية مع أقل تكلفة.',                                    badge: 'توفير',         color: 'text-amber-400'   },
 ]
 
-const RANKING = [
-  { rank: 1, name: 'BYD Seal',        loss: 8,  system: 'OceanX Active Liquid', color: 'text-emerald-400' },
-  { rank: 2, name: 'Lucid Air',       loss: 15, system: 'OceanX AI Cooling',    color: 'text-emerald-400' },
-  { rank: 3, name: 'Tesla Model 3',   loss: 20, system: 'Active Liquid Gen3',   color: 'text-amber-400'   },
-  { rank: 4, name: 'MG4 Trophy',      loss: 23, system: 'Active Liquid',        color: 'text-amber-400'   },
-  { rank: 5, name: 'Kia EV6',         loss: 36, system: 'E-GMP Standard',       color: 'text-rose-400'    },
-  { rank: 6, name: 'Hyundai IONIQ 6', loss: 37, system: 'Standard TMS',         color: 'text-rose-400'    },
+const HEAT_FINDINGS = [
+  { stat: '<5٪',    label: 'فقدان المدى عند 32°C (90°F)',  note: 'تأثير محدود جداً — لا يكاد يُلاحظ في القيادة اليومية.' },
+  { stat: '17-18٪', label: 'فقدان المدى عند 37°C (100°F)',  note: 'المتوسط عبر عشرات آلاف السيارات الكهربائية المسجّلة في بيانات Recurrent Auto.' },
+  { stat: '30-44٪', label: 'فقدان المدى في حرارة شديدة (+40°C) مع قيادة سريعة على الطرق السريعة', note: 'من اختبار ميداني حقيقي لثلاث سيارات كهربائية في جنوب إسبانيا (InsideEVs / What Car?) — الجزء الأكبر من هذا الفقدان سببه السرعة العالية بقدر ما هو الحرارة نفسها.' },
 ]
 
 const FAQ = [
-  { q: 'هل السيارات الكهربائية مناسبة لمناخ الخليج؟',    a: 'نعم، خصوصاً الموديلات ذات التبريد السائل النشط مثل BYD Seal وLucid Air التي تحتفظ بـ85-92٪ من المدى في 45°C.' },
-  { q: 'كيف أحمي بطارية سيارتي في الصيف؟',              a: 'ابقَ في الظل أو مرآب، لا تشحن فوق 80٪، وفعّل التبريد المسبق قبل السفر والشحن.' },
-  { q: 'ما الفرق بين التبريد السائل والهوائي للبطاريات؟', a: 'التبريد السائل يحافظ على 20-35°C حتى في الحر الشديد. التبريد الهوائي يفقد 30-40٪ من المدى في مناخ الخليج.' },
-  { q: 'هل الشحن من الشبكة العامة في الصيف مفيد؟',      a: 'مقبول — تجنب الساعة 12-4 مساءً (ذروة الحرارة). الشحن من محطات AC Level 2 أفضل دائماً للبطارية.' },
+  { q: 'هل السيارات الكهربائية مناسبة لمناخ الخليج؟',    a: 'نعم بشكل عام — بيانات حقيقية من عشرات آلاف السيارات (Recurrent Auto) تُظهر فقدان مدى محدود جداً (أقل من 5٪) عند 32°C، ويرتفع إلى 17-18٪ في المتوسط عند 37°C. الفرق الأكبر بين الموديلات يعتمد على وجود نظام تبريد سائل نشط للبطارية بدل الاعتماد على الهواء فقط.' },
+  { q: 'كيف أحمي بطارية سيارتي في الصيف؟',              a: 'ابقَ في الظل أو مرآب، لا تشحن فوق 80٪ في الاستخدام اليومي، وفعّل التبريد المسبق (Preconditioning) إن كانت سيارتك تدعمه قبل السفر والشحن السريع.' },
+  { q: 'ما الفرق بين التبريد السائل والهوائي للبطاريات؟', a: 'التبريد السائل (Liquid Cooling) ينظّم حرارة الخلايا بدقة أعلى في الحر الشديد مقارنة بالتبريد الهوائي البسيط، وهو موجود في أغلب السيارات الكهربائية الحديثة المخصصة أصلاً (وليس محوّلة من سيارة وقود). التفاصيل التقنية الدقيقة تختلف بين الشركات المصنّعة ويصعب تعميم رقم واحد على كل الموديلات.' },
+  { q: 'هل الشحن من الشبكة العامة في الصيف مفيد؟',      a: 'مقبول — تجنب الساعة 12-4 مساءً (ذروة الحرارة) إن أمكن. الشحن من محطات AC البطيئة أقل إجهاداً على البطارية من الشحن السريع المتكرر في الحر.' },
 ]
 
 export default async function HeatGuidePage() {
@@ -62,9 +61,10 @@ export default async function HeatGuidePage() {
   return (
     <>
       <Navbar />
+      <FaqJsonLd items={FAQ.map(f => ({ q: f.q, a: f.a }))} />
       <main dir="rtl" className="pt-20 pb-24 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
+          <Breadcrumbs items={[{ label: 'دليل الحرارة', href: '/heat-guide' }]} />
           <div className="text-center py-12">
             <div className="inline-flex items-center justify-center w-14 h-14 bg-rose-500/10 border border-rose-500/30 rounded-lg mb-5">
               <Thermometer size={28} className="text-rose-400" />
@@ -73,10 +73,10 @@ export default async function HeatGuidePage() {
               دليل الحرارة
             </h1>
             <p className="text-[#A89070] text-lg max-w-2xl mx-auto mb-6" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>
-              أداء البطاريات في الصيف الحار — مبني على بيانات حقيقية من 45-50°C
+              أداء البطاريات في الصيف الحار — مبني على بيانات ميدانية حقيقية من آلاف السيارات
             </p>
             <div className="inline-flex items-center gap-2 bg-rose-500/10 border border-rose-500/30 rounded-lg px-5 py-3 text-sm text-rose-300" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>
-              <AlertTriangle size={16} /> الحرارة قد تقلص المدى 8-37٪ حسب الموديل — اختر بذكاء
+              <AlertTriangle size={16} /> الحرارة الشديدة قد تقلص المدى بشكل ملحوظ — تعرف على الأرقام الحقيقية
             </div>
           </div>
 
@@ -107,20 +107,23 @@ export default async function HeatGuidePage() {
           <div className="card-surface mb-8">
             <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[#F5A623]/10">
               <Battery size={20} className="text-[#F5A623]" />
-              <h2 className="font-tajawal font-black text-xl text-[#FAF3E0]" style={{ fontFamily: 'Tajawal, sans-serif' }}>ترتيب الموديلات حسب التبريد في الحر</h2>
+              <h2 className="font-tajawal font-black text-xl text-[#FAF3E0]" style={{ fontFamily: 'Tajawal, sans-serif' }}>ماذا تقول البيانات الحقيقية عن الحرارة؟</h2>
             </div>
             <div className="divide-y divide-[#F5A623]/5">
-              {RANKING.map(m => (
-                <div key={m.rank} className="flex items-center gap-4 py-3">
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0 ${m.rank <= 2 ? 'bg-emerald-500/20 text-emerald-400' : m.rank <= 4 ? 'bg-amber-500/20 text-amber-400' : 'bg-rose-500/20 text-rose-400'}`}>{m.rank}</span>
-                  <div className="flex-1">
-                    <p className="font-tajawal font-bold text-[#FAF3E0] text-sm" style={{ fontFamily: 'Tajawal, sans-serif' }}>{m.name}</p>
-                    <p className="text-xs text-[#A89070]">{m.system}</p>
+              {HEAT_FINDINGS.map((f, i) => (
+                <div key={i} className="flex items-start gap-4 py-4">
+                  <span className="font-tajawal font-black text-2xl text-[#F5A623] flex-shrink-0 w-20 text-center" style={{ fontFamily: 'Tajawal, sans-serif' }}>{f.stat}</span>
+                  <div>
+                    <p className="font-tajawal font-bold text-[#FAF3E0] text-sm mb-1" style={{ fontFamily: 'Tajawal, sans-serif' }}>{f.label}</p>
+                    <p className="text-xs text-[#A89070]" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>{f.note}</p>
                   </div>
-                  <div className={`font-bold text-sm ${m.color}`}>-{m.loss}٪</div>
                 </div>
               ))}
             </div>
+            <p className="text-[11px] text-[#A89070]/60 mt-3 pt-3 border-t border-[#F5A623]/5" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>
+              المصادر: Recurrent Auto (بيانات ميدانية من آلاف السيارات)، واختبار ميداني من InsideEVs/What Car? في جنوب إسبانيا.
+              لا تتوفر بيانات موثوقة تفصيلية بعد لكل موديل سيارة على حدة في مناخ الخليج تحديداً.
+            </p>
           </div>
 
           <h2 className="font-tajawal font-black text-2xl text-[#FAF3E0] mb-6" style={{ fontFamily: 'Tajawal, sans-serif' }}>6 نصائح ذهبية للشحن في الحر</h2>

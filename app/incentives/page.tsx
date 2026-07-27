@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import Breadcrumbs from '@/components/Breadcrumbs'
 import { Shield, ExternalLink, Clock } from 'lucide-react'
 
 export const revalidate = 3600
@@ -107,7 +108,7 @@ export default async function IncentivesPage() {
       <Navbar />
       <main dir="rtl" className="pt-20 pb-24 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center py-12">
+          <div className="pt-6"><Breadcrumbs items={[{ label: 'الحوافز', href: '/incentives' }]} /></div>          <div className="text-center py-12">
             <div className="inline-flex items-center justify-center w-14 h-14 bg-[#F5A623]/10 border border-[#F5A623]/30 rounded-lg mb-4">
               <Shield size={28} className="text-[#F5A623]" />
             </div>

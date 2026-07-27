@@ -3,6 +3,7 @@ import type { MetadataRoute } from 'next'
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://shahn-mena.vercel.app'
 
 type ArticleRow = { slug: string; created_at: string }
+type ModelRow = { slug: string; updated_at: string }
 
 async function getArticleSlugs(): Promise<ArticleRow[]> {
   try {
@@ -14,6 +15,18 @@ async function getArticleSlugs(): Promise<ArticleRow[]> {
     console.error('Failed to load article slugs for sitemap:', err)
     // If the DB is unreachable at build time, still ship a sitemap with
     // the static routes rather than failing the whole build over this.
+    return []
+  }
+}
+
+async function getModelSlugs(): Promise<ModelRow[]> {
+  try {
+    const { neon } = await import('@neondatabase/serverless')
+    const sql = neon(process.env.DATABASE_URL!)
+    const rows = await sql('SELECT slug, updated_at FROM ev_models WHERE active = true')
+    return rows as ModelRow[]
+  } catch (err) {
+    console.error('Failed to load model slugs for sitemap:', err)
     return []
   }
 }
@@ -40,5 +53,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }))
 
-  return [...staticRoutes, ...articleRoutes]
+  const models = await getModelSlugs()
+  const modelRoutes: MetadataRoute.Sitemap = models.map(m => ({
+    url: `${siteUrl}/models/${m.slug}`,
+    lastModified: new Date(m.updated_at),
+    changeFrequency: 'weekly',
+    priority: 0.7,
+  }))
+
+  return [...staticRoutes, ...articleRoutes, ...modelRoutes]
 }

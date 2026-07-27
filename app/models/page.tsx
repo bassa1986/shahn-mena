@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import Breadcrumbs from '@/components/Breadcrumbs'
 import { Zap, Battery, Thermometer, ExternalLink } from 'lucide-react'
 
 export const revalidate = 3600
@@ -73,7 +75,7 @@ export default async function ModelsPage() {
       <Navbar />
       <main dir="rtl" className="pt-20 pb-24 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
+          <div className="pt-6"><Breadcrumbs items={[{ label: 'الموديلات', href: '/models' }]} /></div>
           <div className="text-center py-12">
             <div className="inline-flex items-center justify-center w-14 h-14 bg-[#F5A623]/10 border border-[#F5A623]/30 rounded-lg mb-4">
               <Battery size={28} className="text-[#F5A623]" />
@@ -128,7 +130,9 @@ export default async function ModelsPage() {
                     <span className="text-xs text-[#A89070]" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>{m.brand}</span>
                     {m.badge_ar && <span className="badge-gold text-[11px]" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>{m.badge_ar}</span>}
                   </div>
-                  <h2 className="font-tajawal font-black text-xl text-[#FAF3E0] mb-3" style={{ fontFamily: 'Tajawal, sans-serif' }}>{m.name_ar}</h2>
+                  <Link href={`/models/${m.slug}`}>
+                    <h2 className="font-tajawal font-black text-xl text-[#FAF3E0] mb-3 hover:text-[#F5A623] transition-colors" style={{ fontFamily: 'Tajawal, sans-serif' }}>{m.name_ar}</h2>
+                  </Link>
 
                   <div className="grid grid-cols-3 gap-2 mb-4 text-center">
                     <div>

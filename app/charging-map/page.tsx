@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import Breadcrumbs from '@/components/Breadcrumbs'
 import { MapPin, Zap, Navigation } from 'lucide-react'
 
 export const revalidate = 3600
@@ -44,7 +45,8 @@ export default async function ChargingMapPage() {
       <Navbar />
       <main dir="rtl" className="pt-20 pb-24 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative w-full aspect-[21/9] sm:aspect-[3/1] rounded-xl overflow-hidden mt-6 mb-2">
+          <div className="pt-6"><Breadcrumbs items={[{ label: 'الشحن', href: '/charging-map' }]} /></div>
+          <div className="relative w-full aspect-[21/9] sm:aspect-[3/1] rounded-xl overflow-hidden mb-2">
             <Image
               src="https://images.unsplash.com/photo-1641659376402-3d2f48a91ed7?w=1600&h=550&fit=crop&auto=format&q=80"
               alt="محطات شحن السيارات الكهربائية"

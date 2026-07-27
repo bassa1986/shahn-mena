@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import sanitizeHtml from 'sanitize-html'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import Breadcrumbs from '@/components/Breadcrumbs'
 
 export const revalidate = 3600
 
@@ -17,6 +19,24 @@ type Article = {
   seo_description: string | null
   json_ld: Record<string, unknown> | null
   featured_image_url: string | null
+}
+
+type RelatedArticle = { slug: string; title_ar: string; featured_image_url: string | null }
+
+async function getRelatedArticles(category: string | null, currentSlug: string): Promise<RelatedArticle[]> {
+  if (!category) return []
+  try {
+    const { neon } = await import('@neondatabase/serverless')
+    const sql = neon(process.env.DATABASE_URL!)
+    const rows = await sql(
+      'SELECT slug, title_ar, featured_image_url FROM articles WHERE published = true AND category = $1 AND slug != $2 ORDER BY created_at DESC LIMIT 3',
+      [category, currentSlug]
+    )
+    return rows as RelatedArticle[]
+  } catch (err) {
+    console.error('Failed to load related articles:', err)
+    return []
+  }
 }
 
 // article.body_ar is written by an LLM (scripts/scrapers/articles-generator.js)
@@ -76,6 +96,7 @@ export default async function ArticlePage({ params }: { params: { slug: string }
   }
   if (!article) notFound()
 
+  const relatedArticles = await getRelatedArticles(article.category, params.slug)
   const safeBody = sanitizeArticleBody(article.body_ar)
   const articleUrl = `${siteUrl}/articles/${params.slug}`
 
@@ -95,23 +116,13 @@ export default async function ArticlePage({ params }: { params: { slug: string }
     mainEntityOfPage: articleUrl,
   }
 
-  const breadcrumbJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'الرئيسية', item: siteUrl },
-      { '@type': 'ListItem', position: 2, name: 'المقالات', item: `${siteUrl}/articles` },
-      { '@type': 'ListItem', position: 3, name: article.title_ar, item: articleUrl },
-    ],
-  }
-
   return (
     <>
       <Navbar />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <main dir="rtl" className="pt-20 pb-24 min-h-screen">
         <article className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+          <Breadcrumbs items={[{ label: 'المقالات', href: '/articles' }, { label: article.title_ar, href: `/articles/${params.slug}` }]} />
           {article.featured_image_url && (
             <div className="relative w-full aspect-[16/9] rounded-lg overflow-hidden mb-6">
               <Image
@@ -128,6 +139,25 @@ export default async function ArticlePage({ params }: { params: { slug: string }
           <h1 className="font-tajawal font-black text-4xl text-[#FAF3E0] mb-6" style={{ fontFamily: 'Tajawal, sans-serif' }}>{article.title_ar}</h1>
           <div className="text-[#A89070] leading-relaxed" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}
             dangerouslySetInnerHTML={{ __html: safeBody }} />
+
+          {relatedArticles.length > 0 && (
+            <div className="mt-14 pt-8 border-t border-[#F5A623]/10">
+              <h2 className="font-tajawal font-black text-xl text-[#FAF3E0] mb-5" style={{ fontFamily: 'Tajawal, sans-serif' }}>مقالات ذات صلة</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {relatedArticles.map(r => (
+                  <Link key={r.slug} href={`/articles/${r.slug}`}
+                    className="group card-surface hover:border-[#F5A623]/50 transition-all overflow-hidden">
+                    {r.featured_image_url && (
+                      <div className="relative w-full aspect-[16/9] -mx-5 -mt-5 mb-3" style={{ width: 'calc(100% + 2.5rem)' }}>
+                        <Image src={r.featured_image_url} alt={r.title_ar} fill sizes="(max-width: 768px) 100vw, 33vw" className="object-cover" />
+                      </div>
+                    )}
+                    <p className="font-tajawal font-bold text-sm text-[#FAF3E0] group-hover:text-[#F5A623] transition-colors" style={{ fontFamily: 'Tajawal, sans-serif' }}>{r.title_ar}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </article>
       </main>
       <Footer />
