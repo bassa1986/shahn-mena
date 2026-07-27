@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Zap, Battery, Thermometer, ExternalLink } from 'lucide-react'
@@ -25,6 +26,7 @@ type Model = {
   cons_ar: string[]
   syarah_url: string | null
   dubizzle_url: string | null
+  image_url: string | null
   reviewed_at: string | null
 }
 
@@ -35,7 +37,7 @@ async function getModels(): Promise<Model[]> {
     const { neon } = await import('@neondatabase/serverless')
     const sql = neon(process.env.DATABASE_URL!)
     const rows = await sql(
-      'SELECT id, slug, brand, name_ar, badge_ar, range_km, range_hot_km, charge_speed_kw, heat_loss_pct, price_sar, pros_ar, cons_ar, syarah_url, dubizzle_url, reviewed_at FROM ev_models WHERE active = true ORDER BY display_order'
+      'SELECT id, slug, brand, name_ar, badge_ar, range_km, range_hot_km, charge_speed_kw, heat_loss_pct, price_sar, pros_ar, cons_ar, syarah_url, dubizzle_url, image_url, reviewed_at FROM ev_models WHERE active = true ORDER BY display_order'
     )
     return rows as Model[]
   } catch (err) {
@@ -110,7 +112,18 @@ export default async function ModelsPage() {
               const age = daysSince(m.reviewed_at)
               const stale = age !== null && age > 120
               return (
-                <div key={m.id} id={m.slug} className="card-surface flex flex-col scroll-mt-24">
+                <div key={m.id} id={m.slug} className="card-surface flex flex-col scroll-mt-24 overflow-hidden">
+                  {m.image_url && (
+                    <div className="relative w-full aspect-[16/10] -mx-5 -mt-5 mb-4" style={{ width: 'calc(100% + 2.5rem)' }}>
+                      <Image
+                        src={m.image_url}
+                        alt={`${m.brand} ${m.name_ar}`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <span className="text-xs text-[#A89070]" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>{m.brand}</span>
                     {m.badge_ar && <span className="badge-gold text-[11px]" style={{ fontFamily: 'Noto Sans Arabic, sans-serif' }}>{m.badge_ar}</span>}
