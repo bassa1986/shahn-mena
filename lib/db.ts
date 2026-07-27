@@ -39,6 +39,37 @@ export async function queryWithRetry<T = any>(
   throw lastError
 }
 
+/**
+ * Same retry behavior as queryWithRetry, but for callers using Neon's
+ * tagged-template query style (sql`SELECT ... WHERE x = ${value}`)
+ * instead of the function-call style with a separate params array.
+ *
+ * Used specifically for parameterized queries (WHERE slug = $1 etc.) —
+ * the tagged-template form is Neon's primary, most-tested API path.
+ * The function-call style with an explicit params array was observed to
+ * reliably fail in production for parameterized queries specifically
+ * (zero-parameter queries on the same driver/version worked fine), so
+ * this isn't a style preference — it's a workaround for that.
+ */
+export async function withRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 300): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastError = err
+      if (attempt < retries) {
+        console.warn(
+          `DB query failed (attempt ${attempt + 1}/${retries + 1}), retrying in ${delayMs}ms...`,
+          err instanceof Error ? err.message : err
+        )
+        await new Promise(resolve => setTimeout(resolve, delayMs))
+      }
+    }
+  }
+  throw lastError
+}
+
 export { sql }
 
 export type Article = {

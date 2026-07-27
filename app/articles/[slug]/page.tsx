@@ -6,7 +6,7 @@ import sanitizeHtml from 'sanitize-html'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Breadcrumbs from '@/components/Breadcrumbs'
-import { queryWithRetry } from '@/lib/db'
+import { sql, withRetry } from '@/lib/db'
 
 // Dynamic (not ISR-cached): a transient DB hiccup on one render must never
 // get "stuck" as a cached 404 for up to an hour. Combined with the retry
@@ -30,9 +30,8 @@ type RelatedArticle = { slug: string; title_ar: string; featured_image_url: stri
 async function getRelatedArticles(category: string | null, currentSlug: string): Promise<RelatedArticle[]> {
   if (!category) return []
   try {
-    const rows = await queryWithRetry(
-      'SELECT slug, title_ar, featured_image_url FROM articles WHERE published = true AND category = $1 AND slug != $2 ORDER BY created_at DESC LIMIT 3',
-      [category, currentSlug]
+    const rows = await withRetry(() =>
+      sql`SELECT slug, title_ar, featured_image_url FROM articles WHERE published = true AND category = ${category} AND slug != ${currentSlug} ORDER BY created_at DESC LIMIT 3`
     )
     return rows as RelatedArticle[]
   } catch (err) {
@@ -60,7 +59,9 @@ function sanitizeArticleBody(html: string): string {
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   try {
-    const rows = await queryWithRetry('SELECT seo_title, seo_description, featured_image_url FROM articles WHERE slug = $1 AND published = true LIMIT 1', [params.slug])
+    const rows = await withRetry(() =>
+      sql`SELECT seo_title, seo_description, featured_image_url FROM articles WHERE slug = ${params.slug} AND published = true LIMIT 1`
+    )
     if (!rows[0]) return { title: 'مقال | شحن MENA' }
     const row = rows[0] as { seo_title: string | null; seo_description: string | null; featured_image_url: string | null }
     return {
@@ -84,9 +85,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 export default async function ArticlePage({ params }: { params: { slug: string } }) {
   let article: Article | null = null
   try {
-    const rows = await queryWithRetry(
-      'SELECT title_ar, body_ar, category, created_at, seo_description, json_ld, featured_image_url FROM articles WHERE slug = $1 AND published = true LIMIT 1',
-      [params.slug]
+    const rows = await withRetry(() =>
+      sql`SELECT title_ar, body_ar, category, created_at, seo_description, json_ld, featured_image_url FROM articles WHERE slug = ${params.slug} AND published = true LIMIT 1`
     )
     if (rows[0]) article = rows[0] as Article
   } catch (err) {
