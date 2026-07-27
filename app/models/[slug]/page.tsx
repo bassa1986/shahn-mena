@@ -8,7 +8,10 @@ import Breadcrumbs from '@/components/Breadcrumbs'
 import { Zap, Battery, Thermometer, ExternalLink, ChevronLeft } from 'lucide-react'
 import { queryWithRetry } from '@/lib/db'
 
-export const revalidate = 3600
+// Dynamic (not ISR-cached): a transient DB hiccup on one render must never
+// get "stuck" as a cached 404 for up to an hour. Combined with the retry
+// logic in lib/db.ts, every request now gets a fresh attempt.
+export const dynamic = 'force-dynamic'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://shahn-mena.vercel.app'
 
