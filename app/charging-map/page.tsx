@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { MapPin, Zap, Navigation } from 'lucide-react'
@@ -43,6 +44,17 @@ export default async function ChargingMapPage() {
       <Navbar />
       <main dir="rtl" className="pt-20 pb-24 min-h-screen">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative w-full aspect-[21/9] sm:aspect-[3/1] rounded-xl overflow-hidden mt-6 mb-2">
+            <Image
+              src="https://images.unsplash.com/photo-1641659376402-3d2f48a91ed7?w=1600&h=550&fit=crop&auto=format&q=80"
+              alt="محطات شحن السيارات الكهربائية"
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 1200px"
+              className="object-cover"
+            />
+          </div>
+
           <div className="text-center py-12">
             <div className="inline-flex items-center justify-center w-14 h-14 bg-[#F5A623]/10 border border-[#F5A623]/30 rounded-lg mb-4">
               <MapPin size={28} className="text-[#F5A623]" />
